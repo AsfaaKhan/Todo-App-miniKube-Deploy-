@@ -1,0 +1,11 @@
+.git/
+.gitignore
+.DS_Store
+*.md
+!Chart.yaml
+!values*.yaml
+!README.md
+.vscode/
+.idea/
+*.log
+*.tmp

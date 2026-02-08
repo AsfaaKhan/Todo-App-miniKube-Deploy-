@@ -1,0 +1,28 @@
+/* Color Palette Variables */
+:root {
+  /* Blue Primary Colors */
+  --color-primary: #2563EB;        /* Vibrant blue */
+  --color-primary-light: #60A5FA;  /* Light blue */
+  --color-primary-dark: #1D4ED8;   /* Dark blue */
+
+  /* Yellow Accent Colors */
+  --color-accent: #FBBF24;         /* Warm yellow */
+  --color-accent-light: #FCD34D;   /* Light yellow */
+  --color-accent-dark: #F59E0B;    /* Amber yellow */
+
+  /* Neutral Colors with Blue Tint */
+  --color-background: #EFF6FF;      /* Light blue background */
+  --color-card-bg: #FFFFFF;        /* Clean white cards */
+  --color-border: #93C5FD;         /* Soft blue border */
+  --color-text-primary: #1E3A8A;   /* Deep blue text */
+  --color-text-secondary: #3B82F6; /* Medium blue text */
+  --color-text-muted: #60A5FA;     /* Light blue text */
+
+  /* Status Colors */
+  --color-success: #10B981;        /* Success/green */
+  --color-error: #EF4444;          /* Error/red */
+  --color-warning: #FBBF24;        /* Warning/yellow (now matches our theme) */
+
+  /* Focus and Interaction */
+  --color-focus-ring: #FBBF24;     /* Yellow focus ring */
+}

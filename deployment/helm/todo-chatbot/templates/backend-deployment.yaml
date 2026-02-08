@@ -1,0 +1,109 @@
+{{- include "todo-chatbot.validateValues" . -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "todo-chatbot.fullname" . }}-backend
+  labels:
+    {{- include "todo-chatbot.backend.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount.backend }}
+  strategy:
+    type: {{ .Values.strategy.type }}
+    {{- if eq .Values.strategy.type "RollingUpdate" }}
+    rollingUpdate:
+      maxSurge: {{ .Values.strategy.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.strategy.rollingUpdate.maxUnavailable }}
+    {{- end }}
+  selector:
+    matchLabels:
+      {{- include "todo-chatbot.backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "todo-chatbot.backend.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: backend
+        image: "{{ .Values.image.backend.repository }}:{{ .Values.image.backend.tag }}"
+        imagePullPolicy: {{ .Values.image.backend.pullPolicy }}
+        {{- with .Values.securityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.service.backend.targetPort }}
+          protocol: TCP
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "todo-chatbot.fullname" . }}-secrets
+              key: databaseUrl
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "todo-chatbot.fullname" . }}-secrets
+              key: openaiApiKey
+        - name: MCP_CONFIG
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "todo-chatbot.fullname" . }}-secrets
+              key: mcpConfig
+        {{- if .Values.secrets.jwtSecret }}
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "todo-chatbot.fullname" . }}-secrets
+              key: jwtSecret
+        {{- end }}
+        - name: CORS_ORIGINS
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "todo-chatbot.fullname" . }}-config
+              key: CORS_ORIGINS
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "todo-chatbot.fullname" . }}-config
+              key: LOG_LEVEL
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.healthCheck.backend.livenessProbe.path }}
+            port: http
+          initialDelaySeconds: {{ .Values.healthCheck.backend.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.healthCheck.backend.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.healthCheck.backend.livenessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.healthCheck.backend.livenessProbe.failureThreshold }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.healthCheck.backend.readinessProbe.path }}
+            port: http
+          initialDelaySeconds: {{ .Values.healthCheck.backend.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.healthCheck.backend.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.healthCheck.backend.readinessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.healthCheck.backend.readinessProbe.failureThreshold }}
+        resources:
+          {{- toYaml .Values.resources.backend | nindent 10 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

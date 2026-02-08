@@ -1,0 +1,94 @@
+# Production environment overrides for todo-chatbot
+# Use with: helm install todo-chatbot deployment/helm/todo-chatbot -f deployment/helm/todo-chatbot/values-prod.yaml
+
+# Higher replica counts for production
+replicaCount:
+  frontend: 3
+  backend: 3
+
+# Use specific version tags in production
+image:
+  frontend:
+    repository: todo-chatbot-frontend
+    tag: "1.0.0"  # Use semantic versioning in production
+    pullPolicy: IfNotPresent
+  backend:
+    repository: todo-chatbot-backend
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+
+# Higher resource limits for production
+resources:
+  frontend:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  backend:
+    requests:
+      memory: "1Gi"
+      cpu: "1000m"
+    limits:
+      memory: "2Gi"
+      cpu: "2000m"
+
+# Info logging for production
+config:
+  logLevel: "info"
+  featureFlags: {}
+  corsOrigins: ""  # Set to actual production domain
+
+# Standard health checks for production
+healthCheck:
+  frontend:
+    livenessProbe:
+      path: /api/health
+      initialDelaySeconds: 30
+      periodSeconds: 30
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      path: /api/health
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+  backend:
+    livenessProbe:
+      path: /health
+      initialDelaySeconds: 30
+      periodSeconds: 30
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      path: /health
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+
+# Zero-downtime rolling updates for production
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0  # No downtime in production
+
+# Production security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  fsGroup: 1001
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 1001

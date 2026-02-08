@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(find \"E:\\\\HACKATHON-PROJECT\\\\chatbot-deployment\\(minikubes\\)\" -maxdepth 2 -name \"Dockerfile*\" -o -name \"docker-compose*\" -o -name \"*.yaml\" -o -name \"*.yml\")",
+      "Bash(find:*)",
+      "Bash(wc:*)",
+      "Bash(chmod +x deployment/scripts/*.sh)",
+      "Bash(.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks)"
+    ]
+  }
+}

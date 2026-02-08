@@ -1,0 +1,199 @@
+@import "tailwindcss";
+
+/* Import custom design system */
+@import "../src/styles/colors.css";
+@import "../src/styles/typography.css";
+@import "../src/styles/layout.css";
+@import "../src/styles/theme-enhancements.css";
+
+:root {
+  --background: var(--color-background);
+  --foreground: var(--color-text-primary);
+  --card: var(--color-card-bg);
+  --border: var(--color-border);
+  --input: var(--color-border);
+
+  /* Primary colors (Blue) */
+  --primary: var(--color-primary);
+  --primary-foreground: #ffffff;
+
+  /* Secondary colors (Blue) */
+  --secondary: var(--color-primary-light);
+  --secondary-foreground: #ffffff;
+
+  /* Accent colors (Yellow) */
+  --accent: var(--color-accent);
+  --accent-foreground: var(--color-text-primary);
+
+  /* Success colors */
+  --success: var(--color-success);
+  --success-foreground: #ffffff;
+
+  /* Error colors */
+  --destructive: var(--color-error);
+  --destructive-foreground: #ffffff;
+
+  /* Warning colors (Yellow) */
+  --warning: var(--color-warning);
+  --warning-foreground: #ffffff;
+
+  /* Muted colors */
+  --muted: var(--color-card-bg);
+  --muted-foreground: var(--color-text-secondary);
+
+  /* Additional theme colors */
+  --blue-primary: var(--color-primary);
+  --blue-light: var(--color-primary-light);
+  --blue-dark: var(--color-primary-dark);
+  --yellow-accent: var(--color-accent);
+  --yellow-light: var(--color-accent-light);
+  --yellow-dark: var(--color-accent-dark);
+
+  /* Typography */
+  --font-sans: var(--font-family);
+  --font-mono: var(--font-family);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
+  line-height: var(--line-height-normal);
+}
+
+/* Focus ring styling */
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --border: #000000;
+    --input: #000000;
+    --ring: #000000;
+    --color-text-primary: #000000;
+    --color-text-secondary: #000000;
+  }
+
+  .border {
+    border-width: 2px;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    border-width: 2px;
+  }
+}
+
+/* Custom Animations */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-4px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.animate-slideInLeft {
+  animation: slideInFromLeft 0.6s ease-out;
+}
+
+.animate-slideInRight {
+  animation: slideInFromRight 0.6s ease-out;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #3b82f6, #2563eb);
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #2563eb, #1d4ed8);
+}

@@ -1,0 +1,79 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Node modules
+**/node_modules
+node_modules
+
+# Python
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.Python
+**/.venv
+**/venv
+**/*.egg-info
+**/dist
+**/.pytest_cache
+
+# Build outputs
+**/build
+**/dist
+**/.next
+**/out
+**/target
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+**/*.log
+**/logs
+
+# Environment files
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Documentation
+*.md
+!README.md
+docs
+**/docs
+
+# Deployment files (we only need source code)
+deployment/helm
+deployment/scripts
+deployment/docs
+
+# Specs and history
+specs
+history
+.specify
+
+# Test files
+**/*.test.js
+**/*.test.ts
+**/*.spec.js
+**/*.spec.ts
+**/tests
+**/test
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+
+# Misc
+*.tmp
+*.temp
+coverage
+.coverage

@@ -1,0 +1,126 @@
+# Default values for todo-chatbot Helm chart
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount:
+  frontend: 2
+  backend: 2
+
+image:
+  frontend:
+    repository: todo-chatbot-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  backend:
+    repository: todo-chatbot-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+service:
+  frontend:
+    type: NodePort
+    port: 80
+    targetPort: 3000
+    nodePort: 30080
+  backend:
+    type: ClusterIP
+    port: 8000
+    targetPort: 8000
+
+resources:
+  frontend:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  backend:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+config:
+  logLevel: "info"
+  featureFlags: {}
+  corsOrigins: ""
+
+# Secrets should be provided at deployment time via --set or separate values file
+# NEVER commit actual secrets to version control
+secrets:
+  databaseUrl: ""  # Required: postgresql://user:pass@host:port/db
+  openaiApiKey: ""  # Required: sk-proj-...
+  mcpConfig: "{}"
+  jwtSecret: ""
+
+# Health check configuration
+healthCheck:
+  frontend:
+    livenessProbe:
+      path: /api/health
+      initialDelaySeconds: 30
+      periodSeconds: 30
+      timeoutSeconds: 3
+      failureThreshold: 3
+    readinessProbe:
+      path: /api/health
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 3
+  backend:
+    livenessProbe:
+      path: /health
+      initialDelaySeconds: 30
+      periodSeconds: 30
+      timeoutSeconds: 3
+      failureThreshold: 3
+    readinessProbe:
+      path: /health
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 3
+
+# Rolling update strategy
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+# Pod annotations
+podAnnotations: {}
+
+# Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  fsGroup: 1001
+
+# Container security context
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: false
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}
+
+# Pod Disruption Budget (optional, recommended for production)
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+  # maxUnavailable: 1  # Use either minAvailable or maxUnavailable, not both
+

@@ -1,0 +1,77 @@
+# Development environment overrides for todo-chatbot
+# Use with: helm install todo-chatbot deployment/helm/todo-chatbot -f deployment/helm/todo-chatbot/values-dev.yaml
+
+# Lower replica counts for faster iteration
+replicaCount:
+  frontend: 1
+  backend: 1
+
+# Use latest tag for development
+image:
+  frontend:
+    repository: todo-chatbot-frontend
+    tag: latest
+    pullPolicy: Always  # Always pull latest in dev
+  backend:
+    repository: todo-chatbot-backend
+    tag: latest
+    pullPolicy: Always
+
+# Lower resource limits for development
+resources:
+  frontend:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+  backend:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+# Debug logging for development
+config:
+  logLevel: "debug"
+  featureFlags: {}
+  corsOrigins: ""  # Will be set by deploy script with Minikube IP
+
+# Faster health checks for development
+healthCheck:
+  frontend:
+    livenessProbe:
+      path: /api/health
+      initialDelaySeconds: 20
+      periodSeconds: 20
+      timeoutSeconds: 3
+      failureThreshold: 3
+    readinessProbe:
+      path: /api/health
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+  backend:
+    livenessProbe:
+      path: /health
+      initialDelaySeconds: 20
+      periodSeconds: 20
+      timeoutSeconds: 3
+      failureThreshold: 3
+    readinessProbe:
+      path: /health
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+
+# Faster rolling updates for development
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 1  # Allow downtime in dev

@@ -1,0 +1,197 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todo-chatbot-config
+  namespace: todo-chatbot
+data:
+  BACKEND_SERVICE_URL: "http://192.168.49.2:30800"
+  CORS_ORIGINS: "http://localhost:30080,http://192.168.49.2:30080,http://127.0.0.1:30080,http://localhost:3000,http://127.0.0.1:52530"
+  LOG_LEVEL: "debug"
+  FEATURE_FLAGS: "{}"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-chatbot-backend
+  namespace: todo-chatbot
+  labels:
+    app: todo-chatbot-backend
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: todo-chatbot-backend
+  template:
+    metadata:
+      labels:
+        app: todo-chatbot-backend
+    spec:
+      containers:
+      - name: backend
+        image: todo-chatbot-backend:latest
+        imagePullPolicy: Never
+        command: ["uvicorn"]
+        args: ["app.huggingface_app:app", "--host", "0.0.0.0", "--port", "8000"]
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: todo-chatbot-secrets
+              key: databaseUrl
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: todo-chatbot-secrets
+              key: openaiApiKey
+        - name: MCP_CONFIG
+          valueFrom:
+            secretKeyRef:
+              name: todo-chatbot-secrets
+              key: mcpConfig
+        - name: CORS_ORIGINS
+          valueFrom:
+            configMapKeyRef:
+              name: todo-chatbot-config
+              key: CORS_ORIGINS
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: todo-chatbot-config
+              key: LOG_LEVEL
+        - name: SECRET_KEY
+          value: "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 20
+          periodSeconds: 20
+          timeoutSeconds: 3
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-chatbot-backend
+  namespace: todo-chatbot
+  labels:
+    app: todo-chatbot-backend
+spec:
+  type: NodePort
+  ports:
+  - port: 8000
+    targetPort: http
+    protocol: TCP
+    name: http
+    nodePort: 30800
+  selector:
+    app: todo-chatbot-backend
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-chatbot-frontend
+  namespace: todo-chatbot
+  labels:
+    app: todo-chatbot-frontend
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: todo-chatbot-frontend
+  template:
+    metadata:
+      labels:
+        app: todo-chatbot-frontend
+    spec:
+      containers:
+      - name: frontend
+        image: todo-chatbot-frontend:latest
+        imagePullPolicy: Never
+        ports:
+        - name: http
+          containerPort: 3000
+          protocol: TCP
+        env:
+        - name: NEXT_PUBLIC_BACKEND_URL
+          valueFrom:
+            configMapKeyRef:
+              name: todo-chatbot-config
+              key: BACKEND_SERVICE_URL
+        - name: NODE_ENV
+          value: "production"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "250m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-chatbot-frontend
+  namespace: todo-chatbot
+  labels:
+    app: todo-chatbot-frontend
+spec:
+  type: NodePort
+  ports:
+  - port: 3000
+    targetPort: http
+    protocol: TCP
+    name: http
+    nodePort: 30080
+  selector:
+    app: todo-chatbot-frontend

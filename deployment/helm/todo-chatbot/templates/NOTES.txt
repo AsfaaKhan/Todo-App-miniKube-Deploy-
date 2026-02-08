@@ -1,0 +1,53 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Your release is named {{ .Release.Name }}.
+
+To access the Todo AI Chatbot application:
+
+1. Get the application URL:
+   {{- if eq .Values.service.frontend.type "NodePort" }}
+
+   export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "todo-chatbot.fullname" . }}-frontend)
+   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+   echo "Application URL: http://$NODE_IP:$NODE_PORT"
+
+   Or use Minikube service command:
+   minikube service {{ include "todo-chatbot.fullname" . }}-frontend -n {{ .Release.Namespace }} --url
+
+   {{- else if eq .Values.service.frontend.type "LoadBalancer" }}
+
+   NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+
+   export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "todo-chatbot.fullname" . }}-frontend --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+   echo "Application URL: http://$SERVICE_IP:{{ .Values.service.frontend.port }}"
+
+   {{- end }}
+
+2. Check pod status:
+   kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+3. View logs:
+   # Frontend logs
+   kubectl logs -n {{ .Release.Namespace }} -l app=todo-chatbot-frontend --tail=50
+
+   # Backend logs
+   kubectl logs -n {{ .Release.Namespace }} -l app=todo-chatbot-backend --tail=50
+
+4. Monitor deployment:
+   kubectl get all -n {{ .Release.Namespace }}
+
+Configuration:
+- Frontend replicas: {{ .Values.replicaCount.frontend }}
+- Backend replicas: {{ .Values.replicaCount.backend }}
+- Log level: {{ .Values.config.logLevel }}
+
+For more information, see:
+- Quickstart guide: specs/004-minikube-deployment/quickstart.md
+- Deployment README: deployment/README.md
+- Troubleshooting: deployment/docs/troubleshooting.md
+
+To upgrade this release:
+  helm upgrade {{ .Release.Name }} deployment/helm/todo-chatbot -n {{ .Release.Namespace }}
+
+To uninstall this release:
+  helm uninstall {{ .Release.Name }} -n {{ .Release.Namespace }}

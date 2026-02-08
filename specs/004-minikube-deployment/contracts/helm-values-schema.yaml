@@ -1,0 +1,495 @@
+# Helm Values Schema
+
+**Chart**: todo-chatbot
+**Version**: 1.0.0
+**Purpose**: Define the configuration contract for Helm chart deployment
+
+## Schema Definition
+
+```yaml
+# Root configuration object
+replicaCount:
+  type: object
+  required: true
+  description: Number of pod replicas for each service
+  properties:
+    frontend:
+      type: integer
+      required: true
+      minimum: 1
+      maximum: 10
+      default: 2
+      description: Number of frontend pod replicas
+    backend:
+      type: integer
+      required: true
+      minimum: 1
+      maximum: 10
+      default: 2
+      description: Number of backend pod replicas
+
+image:
+  type: object
+  required: true
+  description: Docker image configuration for each service
+  properties:
+    frontend:
+      type: object
+      required: true
+      properties:
+        repository:
+          type: string
+          required: true
+          default: "todo-chatbot-frontend"
+          description: Docker image repository name
+        tag:
+          type: string
+          required: true
+          default: "latest"
+          pattern: "^(latest|[0-9]+\\.[0-9]+\\.[0-9]+)$"
+          description: Image tag (semantic version or 'latest')
+        pullPolicy:
+          type: string
+          required: true
+          enum: ["Always", "IfNotPresent", "Never"]
+          default: "IfNotPresent"
+          description: Image pull policy
+    backend:
+      type: object
+      required: true
+      properties:
+        repository:
+          type: string
+          required: true
+          default: "todo-chatbot-backend"
+          description: Docker image repository name
+        tag:
+          type: string
+          required: true
+          default: "latest"
+          pattern: "^(latest|[0-9]+\\.[0-9]+\\.[0-9]+)$"
+          description: Image tag (semantic version or 'latest')
+        pullPolicy:
+          type: string
+          required: true
+          enum: ["Always", "IfNotPresent", "Never"]
+          default: "IfNotPresent"
+          description: Image pull policy
+
+service:
+  type: object
+  required: true
+  description: Kubernetes Service configuration
+  properties:
+    frontend:
+      type: object
+      required: true
+      properties:
+        type:
+          type: string
+          required: true
+          enum: ["NodePort", "LoadBalancer"]
+          default: "NodePort"
+          description: Service type (NodePort for Minikube)
+        port:
+          type: integer
+          required: true
+          minimum: 1
+          maximum: 65535
+          default: 80
+          description: Service port
+        nodePort:
+          type: integer
+          required: false
+          minimum: 30000
+          maximum: 32767
+          default: 30080
+          description: NodePort for external access (30000-32767)
+    backend:
+      type: object
+      required: true
+      properties:
+        type:
+          type: string
+          required: true
+          enum: ["ClusterIP"]
+          default: "ClusterIP"
+          description: Service type (must be ClusterIP for internal only)
+        port:
+          type: integer
+          required: true
+          minimum: 1
+          maximum: 65535
+          default: 8000
+          description: Service port
+
+resources:
+  type: object
+  required: true
+  description: Resource requests and limits for pods
+  properties:
+    frontend:
+      type: object
+      required: true
+      properties:
+        requests:
+          type: object
+          required: true
+          properties:
+            memory:
+              type: string
+              required: true
+              pattern: "^[0-9]+(Mi|Gi)$"
+              default: "256Mi"
+              description: Memory request (e.g., 256Mi, 1Gi)
+            cpu:
+              type: string
+              required: true
+              pattern: "^[0-9]+(m)?$"
+              default: "250m"
+              description: CPU request (e.g., 250m, 1)
+        limits:
+          type: object
+          required: true
+          properties:
+            memory:
+              type: string
+              required: true
+              pattern: "^[0-9]+(Mi|Gi)$"
+              default: "512Mi"
+              description: Memory limit (must be >= request)
+            cpu:
+              type: string
+              required: true
+              pattern: "^[0-9]+(m)?$"
+              default: "500m"
+              description: CPU limit (must be >= request)
+    backend:
+      type: object
+      required: true
+      properties:
+        requests:
+          type: object
+          required: true
+          properties:
+            memory:
+              type: string
+              required: true
+              pattern: "^[0-9]+(Mi|Gi)$"
+              default: "512Mi"
+              description: Memory request
+            cpu:
+              type: string
+              required: true
+              pattern: "^[0-9]+(m)?$"
+              default: "500m"
+              description: CPU request
+        limits:
+          type: object
+          required: true
+          properties:
+            memory:
+              type: string
+              required: true
+              pattern: "^[0-9]+(Mi|Gi)$"
+              default: "1Gi"
+              description: Memory limit (must be >= request)
+            cpu:
+              type: string
+              required: true
+              pattern: "^[0-9]+(m)?$"
+              default: "1000m"
+              description: CPU limit (must be >= request)
+
+config:
+  type: object
+  required: true
+  description: Application configuration (non-sensitive)
+  properties:
+    logLevel:
+      type: string
+      required: true
+      enum: ["debug", "info", "warning", "error"]
+      default: "info"
+      description: Application log level
+    featureFlags:
+      type: object
+      required: false
+      default: {}
+      description: Feature flags as key-value pairs
+    corsOrigins:
+      type: string
+      required: false
+      default: ""
+      description: Comma-separated list of allowed CORS origins
+
+secrets:
+  type: object
+  required: true
+  description: Sensitive configuration (provided at deployment time)
+  properties:
+    databaseUrl:
+      type: string
+      required: true
+      pattern: "^postgresql://.*"
+      description: PostgreSQL connection string (must start with postgresql://)
+      sensitive: true
+    openaiApiKey:
+      type: string
+      required: true
+      pattern: "^sk-.*"
+      description: OpenAI API key (must start with sk-)
+      sensitive: true
+    mcpConfig:
+      type: string
+      required: false
+      default: "{}"
+      description: MCP server configuration as JSON string
+      sensitive: true
+    jwtSecret:
+      type: string
+      required: false
+      description: JWT secret for authentication (if applicable)
+      sensitive: true
+```
+
+## Validation Rules
+
+### Cross-Field Validations
+
+1. **Resource Limits >= Requests**:
+   - `resources.frontend.limits.memory` >= `resources.frontend.requests.memory`
+   - `resources.frontend.limits.cpu` >= `resources.frontend.requests.cpu`
+   - `resources.backend.limits.memory` >= `resources.backend.requests.memory`
+   - `resources.backend.limits.cpu` >= `resources.backend.requests.cpu`
+
+2. **Service Type Constraints**:
+   - `service.frontend.type` must be `NodePort` or `LoadBalancer`
+   - `service.backend.type` must be `ClusterIP` (internal only)
+   - If `service.frontend.type` is `NodePort`, `service.frontend.nodePort` must be specified
+
+3. **Image Tag Consistency**:
+   - If using semantic versioning, both frontend and backend should use same version
+   - If using `latest`, both should use `latest` for consistency
+
+4. **Replica Count Constraints**:
+   - Total replicas (frontend + backend) should not exceed Minikube capacity
+   - Recommended: frontend + backend <= 10 for local development
+
+### Security Validations
+
+1. **Secrets Never in Values Files**:
+   - `secrets.*` values should be empty strings in committed values files
+   - Actual secrets provided via `--set` flag or separate values file (not committed)
+
+2. **Database URL Format**:
+   - Must start with `postgresql://`
+   - Should include username, password, host, port, database name
+   - Example: `postgresql://user:pass@host:5432/dbname`
+
+3. **OpenAI API Key Format**:
+   - Must start with `sk-`
+   - Should be valid OpenAI API key format
+
+## Example Values Files
+
+### values.yaml (Default)
+
+```yaml
+replicaCount:
+  frontend: 2
+  backend: 2
+
+image:
+  frontend:
+    repository: todo-chatbot-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  backend:
+    repository: todo-chatbot-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+service:
+  frontend:
+    type: NodePort
+    port: 80
+    nodePort: 30080
+  backend:
+    type: ClusterIP
+    port: 8000
+
+resources:
+  frontend:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  backend:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+config:
+  logLevel: "info"
+  featureFlags: {}
+  corsOrigins: ""
+
+secrets:
+  databaseUrl: ""  # Provided at deployment time
+  openaiApiKey: ""  # Provided at deployment time
+  mcpConfig: "{}"
+  jwtSecret: ""
+```
+
+### values-dev.yaml (Development Overrides)
+
+```yaml
+replicaCount:
+  frontend: 1
+  backend: 1
+
+resources:
+  frontend:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+  backend:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+config:
+  logLevel: "debug"
+```
+
+### values-prod.yaml (Production Overrides)
+
+```yaml
+replicaCount:
+  frontend: 3
+  backend: 3
+
+image:
+  frontend:
+    tag: "1.0.0"
+    pullPolicy: Always
+  backend:
+    tag: "1.0.0"
+    pullPolicy: Always
+
+resources:
+  frontend:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  backend:
+    requests:
+      memory: "1Gi"
+      cpu: "1000m"
+    limits:
+      memory: "2Gi"
+      cpu: "2000m"
+
+config:
+  logLevel: "info"
+```
+
+## Usage Examples
+
+### Install with Default Values
+
+```bash
+helm install todo-chatbot deployment/helm/todo-chatbot \
+  --namespace todo-chatbot \
+  --create-namespace \
+  --set secrets.databaseUrl="postgresql://user:pass@host:5432/db" \
+  --set secrets.openaiApiKey="sk-xxxxxxxxxxxxx"
+```
+
+### Install with Development Overrides
+
+```bash
+helm install todo-chatbot deployment/helm/todo-chatbot \
+  --namespace todo-chatbot \
+  --create-namespace \
+  --values deployment/helm/todo-chatbot/values-dev.yaml \
+  --set secrets.databaseUrl="$DATABASE_URL" \
+  --set secrets.openaiApiKey="$OPENAI_API_KEY"
+```
+
+### Upgrade with New Configuration
+
+```bash
+helm upgrade todo-chatbot deployment/helm/todo-chatbot \
+  --namespace todo-chatbot \
+  --set replicaCount.frontend=3 \
+  --set replicaCount.backend=3
+```
+
+### Validate Values Before Install
+
+```bash
+helm template todo-chatbot deployment/helm/todo-chatbot \
+  --values deployment/helm/todo-chatbot/values-dev.yaml \
+  --set secrets.databaseUrl="test" \
+  --set secrets.openaiApiKey="test" \
+  --validate
+```
+
+## Schema Enforcement
+
+The Helm chart templates should include validation logic to enforce this schema:
+
+```yaml
+{{- if not (and .Values.secrets.databaseUrl .Values.secrets.openaiApiKey) }}
+{{- fail "secrets.databaseUrl and secrets.openaiApiKey are required" }}
+{{- end }}
+
+{{- if not (hasPrefix "postgresql://" .Values.secrets.databaseUrl) }}
+{{- fail "secrets.databaseUrl must start with postgresql://" }}
+{{- end }}
+
+{{- if not (hasPrefix "sk-" .Values.secrets.openaiApiKey) }}
+{{- fail "secrets.openaiApiKey must start with sk-" }}
+{{- end }}
+
+{{- if gt (int .Values.replicaCount.frontend) 10 }}
+{{- fail "replicaCount.frontend must not exceed 10" }}
+{{- end }}
+
+{{- if gt (int .Values.replicaCount.backend) 10 }}
+{{- fail "replicaCount.backend must not exceed 10" }}
+{{- end }}
+```
+
+## Version Compatibility
+
+- **Helm Version**: 3.x (required)
+- **Kubernetes Version**: 1.24+ (Minikube default)
+- **Chart API Version**: v2
+
+## Migration Guide
+
+When upgrading from one chart version to another:
+
+1. Review CHANGELOG for breaking changes
+2. Update values files to match new schema
+3. Test with `helm template` before upgrading
+4. Use `helm diff` plugin to preview changes
+5. Perform rolling upgrade with `helm upgrade`
+6. Rollback if issues: `helm rollback todo-chatbot`
