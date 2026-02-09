@@ -111,12 +111,22 @@ if command -v kagent &> /dev/null; then
 fi
 
 # Deploy with Helm
+# Create temporary values file for CORS origins to avoid Helm parsing issues with colons
+TEMP_VALUES=$(mktemp)
+cat > "$TEMP_VALUES" <<EOF
+config:
+  corsOrigins: "http://localhost:30080,http://${MINIKUBE_IP}:30080"
+EOF
+
 helm upgrade --install $RELEASE_NAME $CHART_PATH \
   --namespace $NAMESPACE \
   --values $VALUES_FILE \
-  --set config.corsOrigins="http://localhost:30080,http://${MINIKUBE_IP}:30080" \
+  --values "$TEMP_VALUES" \
   --wait \
   --timeout 10m
+
+# Clean up temp file
+rm -f "$TEMP_VALUES"
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✓ Deployment successful!${NC}"

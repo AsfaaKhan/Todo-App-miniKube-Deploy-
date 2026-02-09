@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todo-chatbot-config
+  namespace: todo-chatbot
+data:
+  BACKEND_SERVICE_URL: "http://todo-chatbot-backend:8000"
+  CORS_ORIGINS: "http://localhost:30080,http://192.168.49.2:30080"
+  LOG_LEVEL: "debug"
+  FEATURE_FLAGS: "{}"

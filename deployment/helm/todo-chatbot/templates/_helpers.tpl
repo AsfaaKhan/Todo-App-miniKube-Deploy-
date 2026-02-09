@@ -95,7 +95,5 @@ Validate required values
 {{- if not (hasPrefix "postgresql://" .Values.secrets.databaseUrl) }}
 {{- fail "secrets.databaseUrl must start with postgresql://" }}
 {{- end }}
-{{- if not (or (hasPrefix "sk-" .Values.secrets.openaiApiKey) (hasPrefix "sk-proj-" .Values.secrets.openaiApiKey)) }}
-{{- fail "secrets.openaiApiKey must start with sk- or sk-proj-" }}
-{{- end }}
+{{- /* Removed API key format validation to support multiple AI providers (OpenAI, Gemini, etc.) */ -}}
 {{- end }}

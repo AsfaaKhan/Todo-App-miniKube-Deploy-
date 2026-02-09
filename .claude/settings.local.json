@@ -6,7 +6,8 @@
       "Bash(find:*)",
       "Bash(wc:*)",
       "Bash(chmod +x deployment/scripts/*.sh)",
-      "Bash(.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks)"
+      "Bash(.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks)",
+      "Bash(minikube docker-env:*)"
     ]
   }
 }
